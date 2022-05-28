@@ -17,6 +17,12 @@ const planeGeometry = new THREE.PlaneGeometry();
 const torusKnotGeometry = new THREE.TorusKnotGeometry();
 // console.dir(geometry)
 const material = new THREE.MeshBasicMaterial();
+const texture = new THREE.TextureLoader().load("img/grid2.jpeg");
+material.map = texture;
+const envTexture = new THREE.CubeTextureLoader().load(["img/px_50.png", "img/nx_50.png", "img/py_50.png", "img/pz_50.png", "img/py_50.png", "img/nz_50.png"]);
+envTexture.mapping = THREE.CubeReflectionMapping;
+// envTexture.mapping =THREE.CubeRefractionMapping
+material.envMap = envTexture;
 // const material: THREE.MeshNormalMaterial = new THREE.MeshNormalMaterial()
 // const material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({ color: '#F38686', wireframe: true})
 material.transparent = true;
@@ -43,7 +49,12 @@ const options = {
         "FrontSide": THREE.FrontSide,
         "BackSide": THREE.BackSide,
         "DoubleSide": THREE.DoubleSide,
-    }
+    },
+    combine: {
+        "MultiplyOperation": THREE.MultiplyOperation,
+        "MixOperation": THREE.MixOperation,
+        "AddOperation": THREE.AddOperation
+    },
 };
 const gui = new GUI();
 const materialFolder = gui.addFolder("THREE.Material");
@@ -55,8 +66,21 @@ materialFolder.add(material, 'alphaTest', 0, 1, 0.01).onChange(() => updateMater
 materialFolder.add(material, 'visible');
 materialFolder.add(material, 'side', options.side).onChange(() => updateMaterial());
 materialFolder.open();
+const data = {
+    color: material.color.getHex(),
+};
+const meshBasicMaterialFolder = gui.addFolder('THREE.MeshBasicMaterial');
+meshBasicMaterialFolder.addColor(data, 'color').onChange(() => { material.color.setHex(Number(data.color.toString().replace('#', '0px'))); });
+meshBasicMaterialFolder.add(material, 'combine', options.combine).onChange(() => updateMaterial());
+meshBasicMaterialFolder.add(material, 'wireframe');
+meshBasicMaterialFolder.add(material, "reflectivity", 0, 1);
+meshBasicMaterialFolder.add(material, "refractionRatio", 0, 1);
+// meshBasicMaterialFolder.add(material, 'wireframeLinewidth', 0, 10);
+meshBasicMaterialFolder.open();
+material.side = THREE.FrontSide;
 function updateMaterial() {
     material.side = Number(material.side);
+    material.combine = Number(material.combine);
     material.needsUpdate = true;
 }
 // const cubeFolder = gui.addFolder("Cube")
