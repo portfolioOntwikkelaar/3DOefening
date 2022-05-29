@@ -6,6 +6,12 @@ import { GUI } from '/jsm/libs/dat.gui.module';
 const scene: THREE.Scene = new THREE.Scene()
 const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
+const light = new THREE.PointLight(0xffffff, 3);
+light.position.set(10,10,10);
+scene.add(light);
+// const light2 = new THREE.PointLight(0xffffff, 3);
+// light2.position.set(-10,-10,-10);
+// scene.add(light2);
 
 const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(95, window.innerWidth / window.innerHeight, 0.1, 1000) //achter 0 staat nog iets
 
@@ -14,42 +20,62 @@ renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
 
 const controls = new OrbitControls(camera, renderer.domElement)
+controls.screenSpacePanning = true
 
-const boxGeometry: THREE.BoxGeometry = new THREE.BoxGeometry()
-const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry()
-const icosahedronGeometry: THREE.IcosahedronGeometry = new THREE.IcosahedronGeometry()
-const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry()
-const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry()
+// const boxGeometry: THREE.BoxGeometry = new THREE.BoxGeometry()
+// const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry()
+// const icosahedronGeometry: THREE.IcosahedronGeometry = new THREE.IcosahedronGeometry()
+const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry(3.6, 1.8)
+// const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry()
 // console.dir(geometry)
-const material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial()
+const material: THREE.MeshPhongMaterial = new THREE.MeshPhongMaterial()
 
-const texture = new THREE.TextureLoader().load("img/grid2.jpeg");
+// const texture = new THREE.TextureLoader().load("img/grid2.jpeg");
+const texture = new THREE.TextureLoader().load("img/worldColour.5400x2700.jpg");
 material.map = texture
-const envTexture = new THREE.CubeTextureLoader().load(["img/px_50.png", "img/nx_50.png", "img/py_50.png", "img/pz_50.png", "img/py_50.png", "img/nz_50.png"])
+// const envTexture = new THREE.CubeTextureLoader().load(["img/px_50.png", "img/nx_50.png", "img/py_50.png", "img/pz_50.png", "img/py_50.png", "img/nz_50.png"])
+const envTexture = new THREE.CubeTextureLoader().load(["img/px_eso0932a.jpg", "img/nx_eso0932a.jpg", "img/py_eso0932a.jpg", "img/ny_eso0932a.jpg", "img/pz_eso0932a.jpg", "img/nz_eso0932a.jpg"])
 envTexture.mapping =THREE.CubeReflectionMapping
 // envTexture.mapping =THREE.CubeRefractionMapping
 
 material.envMap = envTexture
 // const material: THREE.MeshNormalMaterial = new THREE.MeshNormalMaterial()
 // const material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({ color: '#F38686', wireframe: true})
-material.transparent = true
-material.opacity = 0.25
-const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material)
-cube.position.x = 5
-scene.add(cube)
-const sphere: THREE.Mesh = new THREE.Mesh(sphereGeometry, material)
-sphere.position.x = -4
-scene.add(sphere)
-const plane: THREE.Mesh = new THREE.Mesh(planeGeometry, material)
-plane.position.x = -3
-scene.add(plane)
-const torus: THREE.Mesh = new THREE.Mesh(torusKnotGeometry, material)
-torus.position.x = 2
-scene.add(torus)
-const icosahedron: THREE.Mesh = new THREE.Mesh(icosahedronGeometry, material)
-scene.add(icosahedron)
 
-camera.position.z = 13
+// const matcapTexture = new THREE.TextureLoader().load("img/matcap-opal.png")
+// const matcapTexture = new THREE.TextureLoader().load("img/matcap-gold.png")
+// const matcapTexture = new THREE.TextureLoader().load("img/matcap-green.png")
+// const matcapTexture = new THREE.TextureLoader().load("img/matcap-red.png")
+// material.transparent = true
+// material.opacity = 0.25
+// material.matcap = matcapTexture
+// const specularTexture = new THREE.TextureLoader().load("img/grayscale-test.png")
+const specularTexture = new THREE.TextureLoader().load("img/earthSpecular.jpg")
+material.specularMap = specularTexture
+// const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material)
+// cube.position.x = 5
+// scene.add(cube)
+// const sphere: THREE.Mesh = new THREE.Mesh(sphereGeometry, material)
+// sphere.position.x = -4
+// scene.add(sphere)
+const plane: THREE.Mesh = new THREE.Mesh(planeGeometry, material)
+// plane.position.x = -3
+scene.add(plane)
+// const torus: THREE.Mesh = new THREE.Mesh(torusKnotGeometry, material)
+// torus.position.x = 2
+// scene.add(torus)
+// const icosahedron: THREE.Mesh = new THREE.Mesh(icosahedronGeometry, material)
+// scene.add(icosahedron)
+
+camera.position.z = 3
+window.addEventListener('resize', onWindowResize, false)
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer()
+}
+
 
 const stats = Stats()
 document.body.appendChild(stats.dom)
@@ -82,10 +108,19 @@ materialFolder.open()
 
 const data = {
   color: material.color.getHex(),
+  emissive: material.emissive.getHex(),
+  specular: material.specular.getHex()
 };
 
-const meshBasicMaterialFolder = gui.addFolder('THREE.MeshBasicMaterial');
+const meshBasicMaterialFolder = gui.addFolder('THREE.MeshMatcapMaterial');
 meshBasicMaterialFolder.addColor(data, 'color').onChange(() => {material.color.setHex(Number(data.color.toString().replace('#', '0px')))});
+meshBasicMaterialFolder.addColor(data, 'emissive').onChange(()=> {
+  material.emissive.setHex(Number(data.emissive.toString().replace('#', '0xffff')))
+})
+meshBasicMaterialFolder.addColor(data, 'specular').onChange(()=> {
+  material.emissive.setHex(Number(data.specular.toString().replace('#', '0xffff')))
+})
+meshBasicMaterialFolder.add(material, 'shininess', 0, 1024);
 meshBasicMaterialFolder.add(material, 'combine', options.combine).onChange(()=> updateMaterial())
 meshBasicMaterialFolder.add(material, 'wireframe');
 meshBasicMaterialFolder.add(material, "reflectivity", 0, 1);
@@ -199,7 +234,7 @@ var animate = function () {
   // cube.rotation.x += 0.01;
   // cube.rotation.y += 0.01;
   // renderer()
-  document.getElementById("debug1").innerText = "Matrix\n" + cube.matrix.elements.toString().replace(/,/g, "\n",)
+  // document.getElementById("debug1").innerText = "Matrix\n" + cube.matrix.elements.toString().replace(/,/g, "\n",)
   controls.update()
   renderer.render(scene, camera)
 };
