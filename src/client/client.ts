@@ -25,10 +25,10 @@ controls.screenSpacePanning = true
 // const boxGeometry: THREE.BoxGeometry = new THREE.BoxGeometry()
 // const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry()
 // const icosahedronGeometry: THREE.IcosahedronGeometry = new THREE.IcosahedronGeometry()
-const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry(3.6, 1.8)
+const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry(3.6, 1.8, 360, 180)
 // const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry()
 // console.dir(geometry)
-const material: THREE.MeshPhysicalMaterial = new THREE.MeshPhysicalMaterial()
+const material: THREE.MeshPhongMaterial = new THREE.MeshPhongMaterial()
 
 // const texture = new THREE.TextureLoader().load("img/grid2.jpeg");
 const texture = new THREE.TextureLoader().load("img/worldColour.5400x2700.jpg");
@@ -52,8 +52,10 @@ material.envMap = envTexture
 const specularTexture = new THREE.TextureLoader().load("img/earthSpecular.jpg")
 material.roughnessMap = specularTexture
 material.metalnessMap = specularTexture
-const bumpTexture = new THREE.TextureLoader().load("img/earth_normalmap_8192x4096.jpg")
-material.bumpMap = bumpTexture
+const displacementMap = new THREE.TextureLoader().load("img/gebco_bathy.5400x2700_8bit.jpg")
+// const bumpTexture = new THREE.TextureLoader().load("img/earth_normalmap_8192x4096.jpg")
+// material.bumpMap = bumpTexture
+material.displacementMap = displacementMap
 // const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material)
 // cube.position.x = 5
 // scene.add(cube)
@@ -110,43 +112,41 @@ materialFolder.add(material, 'side', options.side).onChange(() => updateMaterial
 
 const data = {
   color: material.color.getHex(),
-  emissive: material.emissive.getHex()
-  // specular: material.specular.getHex()
+  emissive: material.emissive.getHex(),
+  specular: material.specular.getHex()
 };
 
-const meshPhysicalMaterialFolder = gui.addFolder('THREE.meshPhysicalMaterialFolder');
-meshPhysicalMaterialFolder.addColor(data, 'color').onChange(() => {material.color.setHex(Number(data.color.toString().replace('#', '0px')))});
-meshPhysicalMaterialFolder.addColor(data, 'emissive').onChange(()=> {
+const meshPhongMaterialFolder = gui.addFolder('THREE.meshPhysicalMaterialFolder');
+meshPhongMaterialFolder.addColor(data, 'color').onChange(() => {material.color.setHex(Number(data.color.toString().replace('#', '0px')))});
+meshPhongMaterialFolder.addColor(data, 'emissive').onChange(()=> {
   material.emissive.setHex(Number(data.emissive.toString().replace('#', '0xffff')))
 })
-// meshPhysicalMaterialFolder.addColor(data, 'specular').onChange(()=> {
-//   material.emissive.setHex(Number(data.specular.toString().replace('#', '0xffff')))
-// })
-// meshPhysicalMaterialFolder.add(material, 'shininess', 0, 1024);
+meshPhongMaterialFolder.addColor(data, 'specular').onChange(()=> {
+  material.emissive.setHex(Number(data.specular.toString().replace('#', '0xffff')))
+})
+meshPhongMaterialFolder.add(material, 'shininess', 0, 1024);
 // meshPhysicalMaterialFolder.add(material, 'combine', options.combine).onChange(()=> updateMaterial())
-meshPhysicalMaterialFolder.add(material, 'wireframe');
-meshPhysicalMaterialFolder.add(material, 'flatShading').onChange(() => updateMaterial());
-meshPhysicalMaterialFolder.add(material, "reflectivity", 0, 1);
-// meshPhysicalMaterialFolder.add(material, "refractionRatio", 0, 1);
-meshPhysicalMaterialFolder.add(material, "envMapIntensity", 0, 1);
-meshPhysicalMaterialFolder.add(material, "roughness", 0, 1);
-meshPhysicalMaterialFolder.add(material, "metalness", 0, 1);
-meshPhysicalMaterialFolder.add(material, "clearcoat", 0, 1, 0.01);
-meshPhysicalMaterialFolder.add(material, "clearcoatRoughness", 0, 1, 0.01);
-meshPhysicalMaterialFolder.add(material, "bumpScale", 0, 1, 0.01);
+meshPhongMaterialFolder.add(material, 'wireframe');
+meshPhongMaterialFolder.add(material, 'flatShading').onChange(() => updateMaterial());
+meshPhongMaterialFolder.add(material, "reflectivity", 0, 1);
+meshPhongMaterialFolder.add(material, "refractionRatio", 0, 1);
+// meshPhongMaterialFolder.add(material, "envMapIntensity", 0, 1);
+// meshPhongMaterialFolder.add(material, "roughness", 0, 1);
+// meshPhongMaterialFolder.add(material, "metalness", 0, 1);
+// meshPhongMaterialFolder.add(material, "clearcoat", 0, 1, 0.01);
+// meshPhongMaterialFolder.add(material, "clearcoatRoughness", 0, 1, 0.01);
+// meshPhongMaterialFolder.add(material, "bumpScale", 0, 1, 0.01);
+meshPhongMaterialFolder.add(material, "displacementScale", 0, 1, 0.01);
+meshPhongMaterialFolder.add(material, "displacementBias", -1, 1, 0.01);
 // meshBasicMaterialFolder.add(material, 'wireframeLinewidth', 0, 10);
 
 
-meshPhysicalMaterialFolder.open()
+meshPhongMaterialFolder.open()
 
 
 material.side = THREE.FrontSide
 
-function updateMaterial() {
-  material.side = Number(material.side)
-  material.combine = Number(material.combine)
-  material.needsUpdate = true
-}
+
 // const cubeFolder = gui.addFolder("Cube")
 // const cubeRotationFolder = cubeFolder.addFolder("Rotation")
 // cubeRotationFolder.add(cube.rotation, "x", 0, Math.PI * 2, 0.01)
@@ -163,29 +163,40 @@ function updateMaterial() {
 // cubeFolder.add(cube, "visible", true)
 // cubeFolder.open()
 
-// const cubeData = {
-//   width: 2,
-//   height: 2,
-//   depth: 2,
-//   widthSegments: 2,
-//   heightSegments: 2,
-//   depthSegments: 2
-// };
-// const cubePropertiesFolder = cubeFolder.addFolder("Properties")
+const planeData = {
+  width: 3.6,
+  height: 1.8,
+  widthSegments: 360,
+  heightSegments: 180
+
+};
+const planePropertiesFolder = gui.addFolder("PlaneGeometry")
 // cubePropertiesFolder.add(cubeData, 'width', 5, 30).onChange(regenerateBoxGeometry).onFinishChange(()=> console.dir(cube.geometry));
 // cubePropertiesFolder.add(cubeData, 'height', 2, 30).onChange(regenerateBoxGeometry);
 // cubePropertiesFolder.add(cubeData, 'depth', 2, 30).onChange(regenerateBoxGeometry);
-// cubePropertiesFolder.add(cubeData, 'widthSegments', 2, 30).onChange(regenerateBoxGeometry);
-// cubePropertiesFolder.add(cubeData, 'heightSegments', 2, 30).onChange(regenerateBoxGeometry);
+planePropertiesFolder.add(planeData, 'widthSegments', 1, 360).onChange(regeneratePlaneGeometry);
+planePropertiesFolder.add(planeData, 'heightSegments', 1, 180).onChange(regeneratePlaneGeometry);
 // cubePropertiesFolder.add(cubeData, 'depthSegments', 2, 30).onChange(regenerateBoxGeometry);
 
-// function regenerateBoxGeometry() {
-//   let newGeometry = new THREE.BoxGeometry(
-//     cubeData.width, cubeData.height, cubeData.depth, cubeData.widthSegments, cubeData.heightSegments, cubeData.depthSegments
-//   )
-//   cube.geometry.dispose()
-//   cube.geometry = newGeometry
-// }
+function regeneratePlaneGeometry() {
+  let newGeometry = new THREE.PlaneGeometry(
+    planeData.width, planeData.height, planeData.widthSegments, planeData.heightSegments
+  )
+  plane.geometry.dispose()
+  plane.geometry = newGeometry
+}
+
+const textureFolder = gui.addFolder("Texture")
+textureFolder.add(texture.repeat, 'x', 0.1, 1, 0.1)
+textureFolder.add(texture.repeat, 'y', 0.1, 1, 0.1)
+textureFolder.add(texture.repeat, 'x', 0.1, 1, 0.001)
+textureFolder.add(texture.repeat, 'y', 0.1, 1, 0.001)
+textureFolder.open()
+function updateMaterial() {
+  material.side = Number(material.side)
+  // material.combine = Number(material.combine)
+  material.needsUpdate = true
+}
 // const sphereData = {
 //   radius: 2,
 //   widthSegments: 8,
