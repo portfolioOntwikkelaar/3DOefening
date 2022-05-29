@@ -23,7 +23,7 @@ controls.screenSpacePanning = true;
 const planeGeometry = new THREE.PlaneGeometry(3.6, 1.8);
 // const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry()
 // console.dir(geometry)
-const material = new THREE.MeshPhongMaterial();
+const material = new THREE.MeshPhysicalMaterial();
 // const texture = new THREE.TextureLoader().load("img/grid2.jpeg");
 const texture = new THREE.TextureLoader().load("img/worldColour.5400x2700.jpg");
 material.map = texture;
@@ -41,9 +41,11 @@ material.envMap = envTexture;
 // material.transparent = true
 // material.opacity = 0.25
 // material.matcap = matcapTexture
-// const specularTexture = new THREE.TextureLoader().load("img/grayscale-test.png")
 const specularTexture = new THREE.TextureLoader().load("img/earthSpecular.jpg");
-material.specularMap = specularTexture;
+material.roughnessMap = specularTexture;
+material.metalnessMap = specularTexture;
+const bumpTexture = new THREE.TextureLoader().load("img/earth_normalmap_8192x4096.jpg");
+material.bumpMap = bumpTexture;
 // const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material)
 // cube.position.x = 5
 // scene.add(cube)
@@ -89,27 +91,34 @@ materialFolder.add(material, 'depthWrite');
 materialFolder.add(material, 'alphaTest', 0, 1, 0.01).onChange(() => updateMaterial());
 materialFolder.add(material, 'visible');
 materialFolder.add(material, 'side', options.side).onChange(() => updateMaterial());
-materialFolder.open();
+// materialFolder.open()
 const data = {
     color: material.color.getHex(),
-    emissive: material.emissive.getHex(),
-    specular: material.specular.getHex()
+    emissive: material.emissive.getHex()
+    // specular: material.specular.getHex()
 };
-const meshBasicMaterialFolder = gui.addFolder('THREE.MeshMatcapMaterial');
-meshBasicMaterialFolder.addColor(data, 'color').onChange(() => { material.color.setHex(Number(data.color.toString().replace('#', '0px'))); });
-meshBasicMaterialFolder.addColor(data, 'emissive').onChange(() => {
+const meshPhysicalMaterialFolder = gui.addFolder('THREE.meshPhysicalMaterialFolder');
+meshPhysicalMaterialFolder.addColor(data, 'color').onChange(() => { material.color.setHex(Number(data.color.toString().replace('#', '0px'))); });
+meshPhysicalMaterialFolder.addColor(data, 'emissive').onChange(() => {
     material.emissive.setHex(Number(data.emissive.toString().replace('#', '0xffff')));
 });
-meshBasicMaterialFolder.addColor(data, 'specular').onChange(() => {
-    material.emissive.setHex(Number(data.specular.toString().replace('#', '0xffff')));
-});
-meshBasicMaterialFolder.add(material, 'shininess', 0, 1024);
-meshBasicMaterialFolder.add(material, 'combine', options.combine).onChange(() => updateMaterial());
-meshBasicMaterialFolder.add(material, 'wireframe');
-meshBasicMaterialFolder.add(material, "reflectivity", 0, 1);
-meshBasicMaterialFolder.add(material, "refractionRatio", 0, 1);
+// meshPhysicalMaterialFolder.addColor(data, 'specular').onChange(()=> {
+//   material.emissive.setHex(Number(data.specular.toString().replace('#', '0xffff')))
+// })
+// meshPhysicalMaterialFolder.add(material, 'shininess', 0, 1024);
+// meshPhysicalMaterialFolder.add(material, 'combine', options.combine).onChange(()=> updateMaterial())
+meshPhysicalMaterialFolder.add(material, 'wireframe');
+meshPhysicalMaterialFolder.add(material, 'flatShading').onChange(() => updateMaterial());
+meshPhysicalMaterialFolder.add(material, "reflectivity", 0, 1);
+// meshPhysicalMaterialFolder.add(material, "refractionRatio", 0, 1);
+meshPhysicalMaterialFolder.add(material, "envMapIntensity", 0, 1);
+meshPhysicalMaterialFolder.add(material, "roughness", 0, 1);
+meshPhysicalMaterialFolder.add(material, "metalness", 0, 1);
+meshPhysicalMaterialFolder.add(material, "clearcoat", 0, 1, 0.01);
+meshPhysicalMaterialFolder.add(material, "clearcoatRoughness", 0, 1, 0.01);
+meshPhysicalMaterialFolder.add(material, "bumpScale", 0, 1, 0.01);
 // meshBasicMaterialFolder.add(material, 'wireframeLinewidth', 0, 10);
-meshBasicMaterialFolder.open();
+meshPhysicalMaterialFolder.open();
 material.side = THREE.FrontSide;
 function updateMaterial() {
     material.side = Number(material.side);
